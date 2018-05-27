@@ -14,6 +14,44 @@ data "aws_iam_policy_document" "container_instance_ec2_assume_role" {
   }
 }
 
+data "aws_iam_policy_document" "container_instance_service_for_ec2_policy_document" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "ecs:CreateCluster",
+      "ecs:DeregisterContainerInstance",
+      "ecs:DiscoverPollEndpoint",
+      "ecs:Poll",
+      "ecs:RegisterContainerInstance",
+      "ecs:StartTelemetrySession",
+      "ecs:UpdateContainerInstancesState",
+      "ecs:Submit*",
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:GetRepositoryPolicy",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages",
+      "ecr:DescribeImages",
+      "ecr:BatchGetImage",
+      "ecr:InitiateLayerUpload",
+      "ecr:UploadLayerPart",
+      "ecr:CompleteLayerUpload",
+      "ecr:PutImage",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "container_instance_service_for_ec2_policy" {
+  name   = "container_instance_service_for_ec2_policy"
+  policy = "${data.aws_iam_policy_document.container_instance_service_for_ec2_policy_document.json}"
+}
+
 resource "aws_iam_role" "container_instance_ec2" {
   name               = "${var.environment}ContainerInstanceProfile"
   assume_role_policy = "${data.aws_iam_policy_document.container_instance_ec2_assume_role.json}"
@@ -21,7 +59,7 @@ resource "aws_iam_role" "container_instance_ec2" {
 
 resource "aws_iam_role_policy_attachment" "ec2_service_role" {
   role       = "${aws_iam_role.container_instance_ec2.name}"
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+  policy_arn = "${aws_iam_policy.container_instance_service_for_ec2_policy.arn}"
 }
 
 resource "aws_iam_instance_profile" "container_instance" {
